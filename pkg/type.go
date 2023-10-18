@@ -1,6 +1,12 @@
-package go_sjson
+package pkg
 
 type EncryptType string
+
+type Metadata struct {
+	Mode  string `json:"Mode"`
+	KeyId string `json:"KeyId"`
+	Data  string `json:"Data"`
+}
 
 type Codec interface {
 	Marshal(value any) ([]byte, error)
