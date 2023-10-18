@@ -1,21 +1,10 @@
 package go_sjson
 
-type Sjson struct {
-	es Crypto
-}
+import (
+	"github.com/poyaz/go-sjson/internal/codec"
+	"github.com/poyaz/go-sjson/pkg"
+)
 
-var _ Codec = &Sjson{}
-
-func New(encryptionService Crypto) *Sjson {
-	return &Sjson{es: encryptionService}
-}
-
-func (s Sjson) Marshal(value any) ([]byte, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s Sjson) Unmarshal(data []byte, valuePtr any) error {
-	//TODO implement me
-	panic("implement me")
+func NewSjson(encryptionService pkg.Crypto) (*codec.Json, error) {
+	return codec.NewJson(encryptionService)
 }
