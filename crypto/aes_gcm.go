@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"io"
 
-	sjson "github.com/poyaz/go-sjson"
+	sjson "github.com/poyaz/go-sjson/pkg"
 )
 
 type AesGcmEncryption struct {
