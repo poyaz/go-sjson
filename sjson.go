@@ -5,6 +5,6 @@ import (
 	"github.com/poyaz/go-sjson/pkg"
 )
 
-func NewSjson(encryptionService pkg.Crypto) (*codec.Json, error) {
+func NewSjson(encryptionService pkg.Crypto) (codec.Json, error) {
 	return codec.NewJson(encryptionService)
 }

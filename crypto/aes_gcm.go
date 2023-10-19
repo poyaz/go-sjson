@@ -23,30 +23,30 @@ type AesGcmOptions struct {
 
 var _ sjson.Crypto = &AesGcmEncryption{}
 
-func NewAesGcmEncryption(opts AesGcmOptions) (*AesGcmEncryption, error) {
+func NewAesGcmEncryption(opts AesGcmOptions) (AesGcmEncryption, error) {
 	cipherBlock, err := aes.NewCipher(opts.EncryptionKey)
 	if err != nil {
-		return nil, err
+		return AesGcmEncryption{}, err
 	}
 
 	gcm, err := cipher.NewGCM(cipherBlock)
 	if err != nil {
-		return nil, err
+		return AesGcmEncryption{}, err
 	}
 
-	return &AesGcmEncryption{
+	return AesGcmEncryption{
 		Cipher: gcm,
 		eType:  AesGcm,
 	}, nil
 }
 
-func (a *AesGcmEncryption) GetType() sjson.EncryptType {
+func (a AesGcmEncryption) GetType() sjson.EncryptType {
 	return a.eType
 }
 
 // Encrypt takes a byte array and returns an encrypted byte array
 // as base64 encoded
-func (a *AesGcmEncryption) Encrypt(unencryptedBytes []byte) ([]byte, error) {
+func (a AesGcmEncryption) Encrypt(unencryptedBytes []byte) ([]byte, error) {
 	if len(unencryptedBytes) == 0 {
 		return []byte(""), nil
 	}
@@ -64,8 +64,8 @@ func (a *AesGcmEncryption) Encrypt(unencryptedBytes []byte) ([]byte, error) {
 }
 
 // Decrypt takes an encrypted base64 byte array then
-// returns an unencrypted byte array if same key was used to encrypt it
-func (a *AesGcmEncryption) Decrypt(encryptedBytes []byte) ([]byte, error) {
+// returns an unencrypted byte array if the same key was used to encrypt it
+func (a AesGcmEncryption) Decrypt(encryptedBytes []byte) ([]byte, error) {
 	if len(encryptedBytes) == 0 {
 		return []byte(""), nil
 	}

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	pkg "github.com/poyaz/go-sjson/pkg"
+	"github.com/poyaz/go-sjson/pkg"
 )
 
 type Json struct {
@@ -15,11 +15,11 @@ type Json struct {
 
 var _ pkg.Codec = &Json{}
 
-func NewJson(encryptionService pkg.Crypto) (*Json, error) {
-	return &Json{es: encryptionService}, nil
+func NewJson(encryptionService pkg.Crypto) (Json, error) {
+	return Json{es: encryptionService}, nil
 }
 
-func (s *Json) Marshal(value any) ([]byte, error) {
+func (s Json) Marshal(value any) ([]byte, error) {
 	dt := reflect.TypeOf(value)
 	dv := reflect.ValueOf(value)
 
@@ -31,7 +31,7 @@ func (s *Json) Marshal(value any) ([]byte, error) {
 	return json.Marshal(res)
 }
 
-func (s *Json) Unmarshal(data []byte, valuePtr any) error {
+func (s Json) Unmarshal(data []byte, valuePtr any) error {
 	dt := reflect.TypeOf(valuePtr)
 	if dt.Kind() != reflect.Pointer {
 		return pkg.NewNonPointerError()
@@ -48,7 +48,7 @@ func (s *Json) Unmarshal(data []byte, valuePtr any) error {
 	}
 }
 
-func (s *Json) typeEncryption(data reflect.Value, t reflect.Type) (pkg.Metadata, error) {
+func (s Json) typeEncryption(data reflect.Value, t reflect.Type) (pkg.Metadata, error) {
 	var enc []byte
 	var err error
 
@@ -76,7 +76,7 @@ func (s *Json) typeEncryption(data reflect.Value, t reflect.Type) (pkg.Metadata,
 	return res, nil
 }
 
-func (s *Json) byteEncryption(data reflect.Value) ([]byte, error) {
+func (s Json) byteEncryption(data reflect.Value) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	if err := enc.EncodeValue(data); err != nil {
@@ -86,7 +86,7 @@ func (s *Json) byteEncryption(data reflect.Value) ([]byte, error) {
 	return s.es.Encrypt(buf.Bytes())
 }
 
-func (s *Json) byteDecryption(data []byte, valuePtr any) error {
+func (s Json) byteDecryption(data []byte, valuePtr any) error {
 	b, err := s.es.Decrypt(data)
 	if err != nil {
 		return err
