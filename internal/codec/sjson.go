@@ -37,14 +37,21 @@ func (s Json) Unmarshal(data []byte, valuePtr any) error {
 		return pkg.NewNonPointerError()
 	}
 
-	switch dt.Kind() {
-	default:
+	elem := dt.Elem()
+	switch elem.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.String,
+		reflect.Bool,
+		reflect.Map:
 		var dataEnc pkg.Metadata
 		if err := json.Unmarshal(data, &dataEnc); err != nil {
 			return err
 		}
 
-		return s.byteDecryption([]byte(dataEnc.Data), valuePtr)
+		return s.decryption([]byte(dataEnc.Data), valuePtr)
+	default:
+		return pkg.NewNonTypeError(dt)
 	}
 }
 
@@ -55,11 +62,13 @@ func (s Json) typeEncryption(data reflect.Value, t reflect.Type) (pkg.Metadata, 
 	switch t.Kind() {
 	case reflect.Ptr:
 		return s.typeEncryption(data.Elem(), t.Elem())
+	case reflect.Map:
+		return s.mapEncryption(data, t)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.String,
 		reflect.Bool:
-		enc, err = s.byteEncryption(data)
+		enc, err = s.encryption(data)
 	default:
 		return pkg.Metadata{}, pkg.NewNonTypeError(t)
 	}
@@ -76,7 +85,25 @@ func (s Json) typeEncryption(data reflect.Value, t reflect.Type) (pkg.Metadata, 
 	return res, nil
 }
 
-func (s Json) byteEncryption(data reflect.Value) ([]byte, error) {
+func (s Json) mapEncryption(data reflect.Value, t reflect.Type) (pkg.Metadata, error) {
+	var res pkg.Metadata
+	if t.Key().Kind() == reflect.Ptr || t.Elem().Kind() == reflect.Ptr {
+		return res, pkg.NewNonTypeError(t)
+	}
+
+	enc, err := s.encryption(data)
+	if err != nil {
+		return res, err
+	}
+	res = pkg.Metadata{
+		Mode: "AES",
+		Data: string(enc),
+	}
+
+	return res, nil
+}
+
+func (s Json) encryption(data reflect.Value) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	if err := enc.EncodeValue(data); err != nil {
@@ -86,7 +113,7 @@ func (s Json) byteEncryption(data reflect.Value) ([]byte, error) {
 	return s.es.Encrypt(buf.Bytes())
 }
 
-func (s Json) byteDecryption(data []byte, valuePtr any) error {
+func (s Json) decryption(data []byte, valuePtr any) error {
 	b, err := s.es.Decrypt(data)
 	if err != nil {
 		return err
